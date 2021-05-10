@@ -15,6 +15,7 @@ $table_name="archivos";
 $AtributoNombre="nombre";
 $AtributoApellidos="apellidos";
 $AtributoRuta="ruta";
+$fecha=new DateTime();
 //Hemos usado el id como referencia para saber diferenciarlo y poder despues aumentar el digito
 
 /**************************CONTROL DEL USAURIO********************* */
@@ -28,35 +29,42 @@ if(isset($_POST["btnSubmit"])){
 					// Comprobamos que el archivo tenga un nombre (creo que no haria falta)
 						// Comprobamos que el archivo nos haya llegado correctamente
 					if($_FILES['archivo']['error']==UPLOAD_ERR_OK){
-						//Evitamos meter espacios  en los archivos
-						$UserNombre=str_replace(" ","-", $_REQUEST["nombre"]);
-						$UserApellidos=str_replace(" ","-", $_REQUEST["apellidos"]);
+						// $formatFecha=date("m-d-Y_H:i:s:u");
+						// echo $formatFecha;
+						$formatFecha = DateTime::createFromFormat('U.u', microtime(TRUE));
+						
+						$formatFecha=$formatFecha->format("m-d-Y_H꞉i꞉s꞉u");
+						// //Evitamos meter espacios  en los archivos
+						// $UserNombre=str_replace(" ","-", $_REQUEST["nombre"]);
+						// $UserApellidos=str_replace(" ","-", $_REQUEST["apellidos"]);
 						/**-------------------------------------------- */
 						$nombre = $_FILES["archivo"]["name"];
 						$tamanio = $_FILES["archivo"]["size"];
 						$tipo = $_FILES["archivo"]["type"];
 						/**--------------------------------------------- */
 						$destino = get_template_directory()."/subida/";
-						$nuevoNombre=$UserNombre."_".$UserApellidos;
+						// $nuevoNombre=$UserNombre."_".$UserApellidos;
 						// Si el archivo tiene extension pdf se almacenara en nuestro servidor
 						if($tipo=="application/pdf"){		
 							/**------------------------------------------------------------ */
-							/*------------------Comprobar que no existe nombre iguales----------- */
-							$ArrayObjt=$wpdb->get_results("SELECT*FROM $table_name WHERE $AtributoNombre='".$_REQUEST["nombre"]."' "
-														." AND $AtributoApellidos='".$_REQUEST["apellidos"]."'"
-														." AND id=(SELECT MAX(id) FROM $table_name WHERE $AtributoNombre='".$_REQUEST["nombre"]."'"
-														." AND $AtributoApellidos='".$_REQUEST["apellidos"]."');");
-							/**------------En caso de que exista aumentamos un digito al final------- */
-								$path=trim($destino.$nuevoNombre);
-								$path=str_replace("\\", "/", $path);
-							if(count($ArrayObjt)>0){
-								$path=AumentarDigito($ArrayObjt);//Aumentamos el codigo que nos devuelve
-								//La ruta del archivo
-							}else{
-								$path.=".pdf";//En caso de no encontrar similitud añadimos la extension
-							}
+							// /*------------------Comprobar que no existe nombre iguales----------- */
+							// $ArrayObjt=$wpdb->get_results("SELECT*FROM $table_name WHERE $AtributoNombre='".$_REQUEST["nombre"]."' "
+							// 							." AND $AtributoApellidos='".$_REQUEST["apellidos"]."'"
+							// 							." AND id=(SELECT MAX(id) FROM $table_name WHERE $AtributoNombre='".$_REQUEST["nombre"]."'"
+							// 							." AND $AtributoApellidos='".$_REQUEST["apellidos"]."');");
+							// /**------------En caso de que exista aumentamos un digito al final------- */
+							// 	$path=trim($destino.$nuevoNombre);
+							// 	$path=str_replace("\\", "/", $path);
+							// if(count($ArrayObjt)>0){
+							// 	$path=AumentarDigito($ArrayObjt);//Aumentamos el codigo que nos devuelve
+							// 	//La ruta del archivo
+							// }else{
+							// 	$path.=".pdf";//En caso de no encontrar similitud añadimos la extension
+							// }
 							//path es la ruta del archivo y el nombre con el que se va a guardar
 							//Comprobamos que el archivo se a movido correctamente a sitio
+							$path=$destino.$formatFecha.".pdf";
+							$path=str_replace("\\", "/", $path);
 							if(move_uploaded_file($_FILES["archivo"]["tmp_name"], $path)){
 								//Insertar datos en la tabla
 								//Consulta preparada para evitar inyecciones SQL
@@ -91,34 +99,34 @@ if(isset($_POST["btnSubmit"])){
 
 /*******************************FUNCIONES COMPLEMENTARIAS********************************************* */
 //Aumentamos el el digito para evitar que el archivo se sobre escriba 
-function AumentarDigito($array){
-	//En este caso recibimos un array de objetos de la sentencia get_results
-	//Posiblemente si el campo o atributo no se llame igual habra que modificarlo
-	$pathIgual= $array[0]->ruta; //Ruta con nombre de archivo igual
-	//Inicializamos la variables vacias, para posteriormente usarlas
-	$pathNuevo="";
-	$path="";
-		for ($i=0; $i < strlen($pathIgual)-4; $i++) { 
-			$pathNuevo.=substr($pathIgual,$i,1); //Evitamos coger pdf
-		}
-		//Comprobar si el tenemos un numero
-	if(is_numeric(substr($pathNuevo,-1,1))){
-		for ($j=0; $j < strlen($pathNuevo); $j++) { 
-			if(strlen($pathNuevo)-1==$j){
-				$indice=substr($pathNuevo,$j,1);
-				$indice=intval($indice);
-				$path.=($indice+1);
-			}else{
-				$path.=substr($pathNuevo,$j,1);
-			}
-		}
-		$path.=".pdf";
-	}else{
-		$path=$pathNuevo.'1.pdf';
-	}
-	//Devolvemos la nueva ruta para el archivo
-	return $path;
- }
+// function AumentarDigito($array){
+// 	//En este caso recibimos un array de objetos de la sentencia get_results
+// 	//Posiblemente si el campo o atributo no se llame igual habra que modificarlo
+// 	$pathIgual= $array[0]->ruta; //Ruta con nombre de archivo igual
+// 	//Inicializamos la variables vacias, para posteriormente usarlas
+// 	$pathNuevo="";
+// 	$path="";
+// 		for ($i=0; $i < strlen($pathIgual)-4; $i++) { 
+// 			$pathNuevo.=substr($pathIgual,$i,1); //Evitamos coger pdf
+// 		}
+// 		//Comprobar si el tenemos un numero
+// 	if(is_numeric(substr($pathNuevo,-1,1))){
+// 		for ($j=0; $j < strlen($pathNuevo); $j++) { 
+// 			if(strlen($pathNuevo)-1==$j){
+// 				$indice=substr($pathNuevo,$j,1);
+// 				$indice=intval($indice);
+// 				$path.=($indice+1);
+// 			}else{
+// 				$path.=substr($pathNuevo,$j,1);
+// 			}
+// 		}
+// 		$path.=".pdf";
+// 	}else{
+// 		$path=$pathNuevo.'1.pdf';
+// 	}
+// 	//Devolvemos la nueva ruta para el archivo
+// 	return $path;
+//  }
 
 
  function SoloLetras($request){
